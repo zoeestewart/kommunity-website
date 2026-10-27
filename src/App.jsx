@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
 import { Link, NavLink, Outlet } from "react-router-dom";
 
@@ -11,20 +11,36 @@ const navigation = [
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButtonRef = useRef(null);
+  const drawerRef = useRef(null);
 
   useEffect(() => {
     if (!isMenuOpen) return undefined;
 
-    const closeOnEscape = (event) => {
-      if (event.key === "Escape") setIsMenuOpen(false);
+    const focusableElements = drawerRef.current.querySelectorAll("a[href], button:not([disabled])");
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    firstElement?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+      } else if (event.key === "Tab" && event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement?.focus();
+      } else if (event.key === "Tab" && !event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement?.focus();
+      }
     };
 
-    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("keydown", handleKeyDown);
     document.body.style.overflow = "hidden";
 
     return () => {
-      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
+      menuButtonRef.current?.focus();
     };
   }, [isMenuOpen]);
 
@@ -50,6 +66,7 @@ export default function App() {
               aria-controls="mobile-navigation"
               className="inline-flex size-10 items-center justify-center border border-white/20 text-white transition hover:border-pink-400 hover:text-pink-300 sm:hidden"
               onClick={() => setIsMenuOpen(true)}
+              ref={menuButtonRef}
               type="button"
             >
               <FiMenu aria-hidden="true" size={21} />
@@ -70,6 +87,7 @@ export default function App() {
             aria-modal="true"
             className="absolute inset-y-0 right-0 flex w-[min(84vw,360px)] flex-col border-l border-white/10 bg-[#151015] p-6 shadow-2xl"
             id="mobile-navigation"
+            ref={drawerRef}
             role="dialog"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-5">
