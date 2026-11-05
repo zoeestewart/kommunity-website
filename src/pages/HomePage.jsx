@@ -1,6 +1,42 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { FaInstagram } from "react-icons/fa";
+import siteConfig from "../siteConfig";
 
 export default function HomePage() {
+  const [instagramPosts, setInstagramPosts] = useState([]);
+  const [instagramFeedState, setInstagramFeedState] = useState("loading");
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadInstagramPosts() {
+      try {
+        const response = await fetch(siteConfig.instagram.apiUrl, {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error("Instagram feed request failed.");
+        }
+
+        const feed = await response.json();
+        if (!Array.isArray(feed.posts)) {
+          throw new Error("Instagram feed response was invalid.");
+        }
+
+        setInstagramPosts(feed.posts);
+        setInstagramFeedState("loaded");
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setInstagramFeedState("error");
+        }
+      }
+    }
+
+    loadInstagramPosts();
+    return () => controller.abort();
+  }, []);
+
   return (
     <>
       <section
@@ -39,8 +75,76 @@ export default function HomePage() {
         <Link className="border-l-2 border-pink-500 bg-white/[0.04] p-7 transition hover:bg-white/[0.08]" to="/contact">
           <p className="text-sm font-bold uppercase tracking-[0.16em] text-pink-300">Find us</p>
           <h2 className="mt-3 text-2xl font-bold">Meet us on Brunswick Street</h2>
-          <p className="mt-3 text-white/65">243 Brunswick Street, Fortitude Valley.</p>
+          <p className="mt-3 text-white/65">{siteConfig.venue.streetAddress}, {siteConfig.venue.suburb}.</p>
         </Link>
+      </section>
+      <section aria-labelledby="instagram-posts-heading" className="border-y border-white/10 bg-white/[0.03]">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.16em] text-pink-300">From our Instagram</p>
+              <h2 className="mt-3 text-2xl font-bold sm:text-3xl" id="instagram-posts-heading">The latest from the Kommunity</h2>
+            </div>
+            <a
+              className="inline-flex shrink-0 items-center gap-2 self-start border border-white/30 px-5 py-3 font-bold transition hover:border-pink-400 hover:text-pink-300 sm:self-auto"
+              href={siteConfig.instagram.profileUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <FaInstagram aria-hidden="true" size={20} />
+              Follow @kommunitybne
+            </a>
+          </div>
+          {instagramFeedState === "loading" && (
+            <div aria-label="Loading latest Instagram posts" aria-live="polite" className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6" role="status">
+              {Array.from({ length: 6 }, (_, index) => (
+                <div className="aspect-square animate-pulse bg-white/10" key={index} />
+              ))}
+            </div>
+          )}
+          {instagramFeedState === "error" && (
+            <p className="border border-white/10 px-5 py-6 text-white/65" role="status">
+              Instagram posts are temporarily unavailable. Visit our profile for the latest.
+            </p>
+          )}
+          {instagramFeedState === "loaded" && instagramPosts.length === 0 && (
+            <p className="border border-white/10 px-5 py-6 text-white/65" role="status">
+              No Instagram posts to show just yet. Check back soon.
+            </p>
+          )}
+          {instagramFeedState === "loaded" && instagramPosts.length > 0 && (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+              {instagramPosts.map((post) => {
+                const imageUrl = post.thumbnail_url || post.media_url;
+                const caption = typeof post.caption === "string" ? post.caption : "";
+
+                return (
+                  <a
+                    className="group overflow-hidden border border-white/10 bg-black/20 transition hover:border-pink-400"
+                    href={post.permalink}
+                    key={post.id}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {imageUrl ? (
+                      <img
+                        alt={caption ? caption.slice(0, 120) : "Instagram post from @kommunitybne"}
+                        className="aspect-square w-full object-cover transition duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        src={imageUrl}
+                      />
+                    ) : (
+                      <div className="flex aspect-square items-center justify-center bg-white/5 px-4 text-center text-sm text-white/60">
+                        View post on Instagram
+                      </div>
+                    )}
+                    {caption && <p className="line-clamp-3 p-3 text-sm leading-5 text-white/75">{caption}</p>}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </section>
     </>
   );

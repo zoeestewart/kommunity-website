@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { FaInstagram } from "react-icons/fa";
 import { FiMenu, FiX } from "react-icons/fi";
 import { Link, NavLink, Outlet } from "react-router-dom";
+import siteConfig from "./siteConfig";
 
 const navigation = [
   { label: "Home", to: "/" },
@@ -132,9 +134,18 @@ export default function App() {
             <p className="mt-3 max-w-sm text-sm leading-6 text-white/65">Brisbane nights, made for your Kommunity.</p>
           </div>
           <div className="text-sm leading-7 text-white/65 md:text-right">
-            <p className="font-semibold text-white">243 Brunswick Street</p>
-            <p>Fortitude Valley, Brisbane QLD</p>
-            <a className="transition hover:text-white" href="mailto:marketing@kommunity.com.au">marketing@kommunity.com.au</a>
+            <p className="font-semibold text-white">{siteConfig.venue.streetAddress}</p>
+            <p>{siteConfig.venue.locality}</p>
+            <a className="transition hover:text-white" href={`mailto:${siteConfig.emails.marketing}`}>{siteConfig.emails.marketing}</a>
+            <a
+              className="mt-2 inline-flex items-center gap-2 transition hover:text-pink-300"
+              href={siteConfig.instagram.profileUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <FaInstagram aria-hidden="true" />
+              Follow us on Instagram
+            </a>
           </div>
         </div>
         <p className="border-t border-white/10 px-4 py-4 text-center text-xs text-white/45">© 2026 Kommunity Nightclub</p>

@@ -1,14 +1,16 @@
+import siteConfig from "../siteConfig";
+
 const events = [
   {
     title: "Saturday Night",
-    date: "Every Saturday · 9pm till late",
+    date: `Every Saturday · ${siteConfig.venue.openingHours}`,
     description: "A packed dancefloor, late-night DJs, and the best of Brisbane's club scene.",
     image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1000&q=85",
     alt: "Crowd enjoying a live music event",
   },
   {
     title: "Birthday Sessions",
-    date: "Fridays · 9pm till late",
+    date: `Fridays · ${siteConfig.venue.openingHours}`,
     description: "Bring your people together for a birthday night with room to celebrate.",
     image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1000&q=85",
     alt: "Festival crowd beneath stage lights",
