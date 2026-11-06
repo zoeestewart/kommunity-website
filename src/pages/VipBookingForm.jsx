@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import siteConfig from "../siteConfig";
 
+const BOOKING_API_FLAG = "kommunityVipBookingApiEnabled";
+
 class BookingApiError extends Error {
   constructor(message, status) {
     super(message);
@@ -57,6 +59,7 @@ async function readResponse(response) {
 
 export default function VipBookingForm() {
   const today = brisbaneDate();
+  const [isBookingApiEnabled] = useState(() => window.localStorage.getItem(BOOKING_API_FLAG) === "true");
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState({});
   const [availabilityMessage, setAvailabilityMessage] = useState("");
@@ -70,6 +73,13 @@ export default function VipBookingForm() {
   const availability = date ? slots[date] : null;
 
   useEffect(() => {
+    if (!isBookingApiEnabled) {
+      setIsChecking(false);
+      setAvailabilityMessage("Online bookings are currently disabled.");
+      setShowGoogleFallback(true);
+      return undefined;
+    }
+
     const controller = new AbortController();
     setIsChecking(true);
     setShowGoogleFallback(false);
@@ -100,12 +110,18 @@ export default function VipBookingForm() {
       });
 
     return () => controller.abort();
-  }, [availabilityRefresh, today]);
+  }, [availabilityRefresh, today, isBookingApiEnabled]);
 
   async function submitBooking(event) {
     event.preventDefault();
     setBookingMessage("");
     setBookingError("");
+
+    if (!isBookingApiEnabled) {
+      setBookingError("Online bookings are currently disabled. Please use Google’s booking page instead.");
+      setShowGoogleFallback(true);
+      return;
+    }
 
     if (!availability?.available || !date) {
       setBookingError("Choose an available Friday or Saturday from the booking grid.");
@@ -158,10 +174,24 @@ export default function VipBookingForm() {
       <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-pink-300">Book online</p>
       <h2 className="text-2xl font-bold">VIP table</h2>
       <p className="mt-3 leading-6 text-white/65">
-        Pick a Friday or Saturday. Bookings start at {siteConfig.bookings.vipStartTime} and run for{" "}
-        {siteConfig.bookings.vipDurationHours} hours. Your booking is confirmed on this page.
+        VIP packages start at ${siteConfig.bookings.vipStartingPrice}. Pick a Friday or Saturday. Bookings start at{" "}
+        {siteConfig.bookings.vipStartTime} and run for {siteConfig.bookings.vipDurationHours} hours. Your booking is confirmed on this page.
       </p>
-      <form className="mt-6 space-y-5" onSubmit={submitBooking}>
+      {!isBookingApiEnabled ? (
+        <div className="mt-6 border border-white/10 p-5">
+          <p className="text-sm leading-6 text-white/65">
+            Online bookings are currently disabled. You can still book using our Google booking page.
+          </p>
+          <a
+            className="mt-4 inline-flex border border-white/30 px-5 py-3 font-semibold transition hover:border-pink-400 hover:text-pink-300"
+            href={siteConfig.bookings.googleBookingUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Use Google’s booking page
+          </a>
+        </div>
+      ) : <form className="mt-6 space-y-5" onSubmit={submitBooking}>
         <fieldset>
           <legend className="text-sm font-semibold">Choose a date and time</legend>
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -266,7 +296,7 @@ export default function VipBookingForm() {
         >
           {isSubmitting ? "Booking…" : "Book VIP table"}
         </button>
-      </form>
+      </form>}
     </section>
   );
 }

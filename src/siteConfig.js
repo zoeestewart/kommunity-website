@@ -21,7 +21,8 @@ const siteConfig = {
     vipStartTime: "9:00pm",
     vipEndTime: "12:00am",
     vipDurationHours: 3,
-    vipCapacity: 2,
+    vipCapacity: 3,
+    vipStartingPrice: 350,
   },
 };
 

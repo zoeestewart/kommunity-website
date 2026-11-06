@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import siteConfig from "../siteConfig";
 
 export default function VIPPage() {
   return (
@@ -8,6 +9,9 @@ export default function VIPPage() {
         <h1 className="text-4xl font-black leading-tight sm:text-6xl">Your night, <span className="text-pink-500">elevated.</span></h1>
         <p className="mt-5 max-w-xl text-lg leading-7 text-white/65">
           Settle into a VIP booth with bottle service and space for your crew. Make the night yours from the moment you arrive.
+        </p>
+        <p className="mt-4 text-lg font-bold text-pink-300">
+          VIP packages from ${siteConfig.bookings.vipStartingPrice}
         </p>
         <Link className="mt-7 inline-flex bg-pink-500 px-6 py-3 font-bold text-black transition hover:bg-pink-300" to="/contact">
           Enquire about VIP

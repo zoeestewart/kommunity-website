@@ -4,7 +4,7 @@ declare(strict_types=1);
 const BOOKING_TIMEZONE = 'Australia/Brisbane';
 const BOOKING_START_HOUR = 21;
 const BOOKING_DURATION_HOURS = 3;
-const BOOKING_CAPACITY = 2;
+const BOOKING_CAPACITY = 3;
 const MAX_BOOKING_DAYS_AHEAD = 90;
 
 header('Content-Type: application/json; charset=utf-8');
