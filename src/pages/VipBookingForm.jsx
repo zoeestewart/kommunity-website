@@ -218,7 +218,7 @@ export default function VipBookingForm() {
               Refresh availability
             </button>
           </div>
-          <div aria-label="VIP table availability by date" className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div aria-label="VIP table availability by date" className="mt-3 grid max-h-[30vh] grid-cols-2 gap-3 overflow-y-auto overscroll-contain p-1 sm:grid-cols-3">
             {bookingDateOptions.map((bookingDate) => {
               const slot = slots[bookingDate];
               const isAvailable = !isChecking && slot?.available;
