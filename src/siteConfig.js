@@ -16,13 +16,16 @@ const siteConfig = {
     openingHours: "9pm till late",
   },
   bookings: {
-    googleBookingUrl: "https://calendar.app.google/2MMBUoyCtDr5pL2Y7",
+    // Set to false to hide the online VIP booking form and send visitors to the enquiry form instead.
+    onlineEnabled: true,
     apiUrl: "/api/bookings.php",
     vipStartTime: "9:00pm",
     vipEndTime: "12:00am",
     vipDurationHours: 3,
     vipCapacity: 3,
     vipStartingPrice: 350,
+    // Keep aligned with MIN_BOOKING_NOTICE_DAYS in public/api/bookings.php.
+    minNoticeDays: 7,
   },
 };
 

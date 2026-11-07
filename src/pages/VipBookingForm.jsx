@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import siteConfig from "../siteConfig";
-
-const BOOKING_API_FLAG = "kommunityVipBookingApiEnabled";
 
 class BookingApiError extends Error {
   constructor(message, status) {
@@ -59,7 +57,7 @@ async function readResponse(response) {
 
 export default function VipBookingForm() {
   const today = brisbaneDate();
-  const [isBookingApiEnabled] = useState(() => window.localStorage.getItem(BOOKING_API_FLAG) === "true");
+  const isBookingApiEnabled = siteConfig.bookings.onlineEnabled;
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState({});
   const [availabilityMessage, setAvailabilityMessage] = useState("");
@@ -67,24 +65,25 @@ export default function VipBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
   const [bookingError, setBookingError] = useState("");
-  const [showGoogleFallback, setShowGoogleFallback] = useState(false);
+  const [showContactFallback, setShowContactFallback] = useState(false);
   const [availabilityRefresh, setAvailabilityRefresh] = useState(0);
-  const bookingDateOptions = bookingDates(today, 90);
+  const confirmationRef = useRef(null);
+  const earliestDate = addDays(today, siteConfig.bookings.minNoticeDays);
+  const bookingDateOptions = bookingDates(earliestDate, 90 - siteConfig.bookings.minNoticeDays);
   const availability = date ? slots[date] : null;
 
   useEffect(() => {
     if (!isBookingApiEnabled) {
       setIsChecking(false);
-      setAvailabilityMessage("Online bookings are currently disabled.");
-      setShowGoogleFallback(true);
+      setShowContactFallback(true);
       return undefined;
     }
 
     const controller = new AbortController();
     setIsChecking(true);
-    setShowGoogleFallback(false);
+    setShowContactFallback(false);
 
-    fetch(`${siteConfig.bookings.apiUrl}?from=${encodeURIComponent(today)}&to=${encodeURIComponent(addDays(today, 90))}`, {
+    fetch(`${siteConfig.bookings.apiUrl}?from=${encodeURIComponent(earliestDate)}&to=${encodeURIComponent(addDays(today, 90))}`, {
       signal: controller.signal,
     })
       .then(readResponse)
@@ -93,14 +92,14 @@ export default function VipBookingForm() {
           throw new BookingApiError("The booking service returned an invalid availability grid.");
         }
         setSlots(result.slots);
-        setShowGoogleFallback(false);
+        setShowContactFallback(false);
         setAvailabilityMessage("Choose a Friday or Saturday. Availability is shown in Brisbane time.");
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
           setSlots({});
           setAvailabilityMessage(error.message || "We couldn't check availability. Please try again.");
-          setShowGoogleFallback(true);
+          setShowContactFallback(true);
         }
       })
       .finally(() => {
@@ -110,7 +109,14 @@ export default function VipBookingForm() {
       });
 
     return () => controller.abort();
-  }, [availabilityRefresh, today, isBookingApiEnabled]);
+  }, [availabilityRefresh, today, earliestDate, isBookingApiEnabled]);
+
+  // Bring the confirmation into view when a booking succeeds.
+  useEffect(() => {
+    if (bookingMessage) {
+      confirmationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [bookingMessage]);
 
   async function submitBooking(event) {
     event.preventDefault();
@@ -118,8 +124,8 @@ export default function VipBookingForm() {
     setBookingError("");
 
     if (!isBookingApiEnabled) {
-      setBookingError("Online bookings are currently disabled. Please use Google’s booking page instead.");
-      setShowGoogleFallback(true);
+      setBookingError("Online bookings are currently unavailable. Please send us an enquiry instead.");
+      setShowContactFallback(true);
       return;
     }
 
@@ -128,7 +134,9 @@ export default function VipBookingForm() {
       return;
     }
 
-    const formData = new FormData(event.currentTarget);
+    // Keep a reference to the form: event.currentTarget is cleared once we await.
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     setIsSubmitting(true);
 
     try {
@@ -145,7 +153,10 @@ export default function VipBookingForm() {
         }),
       });
       const result = await readResponse(response);
-      setBookingMessage(result.message);
+      const guests = Number(formData.get("guests"));
+      setBookingMessage(
+        `Your VIP table is booked for ${formatBookingDate(date)}, ${siteConfig.bookings.vipStartTime}–${siteConfig.bookings.vipEndTime}, for ${guests} ${guests === 1 ? "guest" : "guests"}. See you there!`,
+      );
       setSlots((currentSlots) => ({
         ...currentSlots,
         [date]: {
@@ -153,10 +164,12 @@ export default function VipBookingForm() {
           slotsRemaining: result.slotsRemaining,
         },
       }));
+      form.reset();
+      setDate("");
     } catch (error) {
       setBookingError(error.message || "We couldn't complete the booking. Please try again.");
       if (error.status === undefined || error.status >= 500) {
-        setShowGoogleFallback(true);
+        setShowContactFallback(true);
       }
       if (error.status === 409) {
         setSlots((currentSlots) => ({
@@ -175,20 +188,18 @@ export default function VipBookingForm() {
       <h2 className="text-2xl font-bold">VIP table</h2>
       <p className="mt-3 leading-6 text-white/65">
         VIP packages start at ${siteConfig.bookings.vipStartingPrice}. Pick a Friday or Saturday. Bookings start at{" "}
-        {siteConfig.bookings.vipStartTime} and run for {siteConfig.bookings.vipDurationHours} hours. Your booking is confirmed on this page.
+        {siteConfig.bookings.vipStartTime} and run for {siteConfig.bookings.vipDurationHours} hours. Please book at least one week ahead.
       </p>
       {!isBookingApiEnabled ? (
-        <div className="mt-6 border border-white/10 p-5">
+        <div className="mt-6">
           <p className="text-sm leading-6 text-white/65">
-            Online bookings are currently disabled. You can still book using our Google booking page.
+            To book a VIP table, send us an enquiry with your preferred date and number of guests and we’ll get back to you.
           </p>
           <a
-            className="mt-4 inline-flex border border-white/30 px-5 py-3 font-semibold transition hover:border-pink-400 hover:text-pink-300"
-            href={siteConfig.bookings.googleBookingUrl}
-            rel="noreferrer"
-            target="_blank"
+            className="mt-4 inline-flex bg-pink-500 px-6 py-3 font-bold text-black transition hover:bg-pink-300"
+            href="#enquiry"
           >
-            Use Google’s booking page
+            Enquire about a VIP table
           </a>
         </div>
       ) : <form className="mt-6 space-y-5" onSubmit={submitBooking}>
@@ -267,7 +278,7 @@ export default function VipBookingForm() {
         <label className="block text-sm font-semibold" htmlFor="vip-email">
           Email address
           <input className="mt-2 block w-full border border-white/20 bg-white/[0.04] px-4 py-3 text-white focus:border-pink-400 focus:outline-none" id="vip-email" name="email" type="email" autoComplete="email" maxLength="254" required />
-          <span className="mt-2 block text-xs font-normal text-white/50">Your email is saved with the calendar booking. Confirmation appears here; Google won’t email an invitation.</span>
+          <span className="mt-2 block text-xs font-normal text-white/50">Your email is saved with the calendar booking. Confirmation appears on this page.</span>
         </label>
         <label className="block text-sm font-semibold" htmlFor="vip-guests">
           Number of guests
@@ -277,16 +288,23 @@ export default function VipBookingForm() {
           Leave this field empty
           <input autoComplete="off" id="vip-website" name="website" tabIndex="-1" />
         </label>
-        {bookingMessage && <p aria-live="polite" className="text-sm text-green-300">{bookingMessage}</p>}
+        {bookingMessage && (
+          <div
+            className="border border-green-400/40 bg-green-500/10 p-4"
+            ref={confirmationRef}
+            role="status"
+          >
+            <p className="font-semibold text-green-300">Booking confirmed</p>
+            <p className="mt-1 text-sm leading-6 text-white/80">{bookingMessage}</p>
+          </div>
+        )}
         {bookingError && <p aria-live="assertive" className="text-sm text-red-300">{bookingError}</p>}
-        {showGoogleFallback && (
+        {showContactFallback && (
           <a
             className="inline-flex border border-white/30 px-5 py-3 font-semibold transition hover:border-pink-400 hover:text-pink-300"
-            href={siteConfig.bookings.googleBookingUrl}
-            rel="noreferrer"
-            target="_blank"
+            href="#enquiry"
           >
-            Use Google’s booking page instead
+            Send us an enquiry instead
           </a>
         )}
         <button

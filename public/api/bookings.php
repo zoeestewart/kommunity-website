@@ -6,6 +6,7 @@ const BOOKING_START_HOUR = 21;
 const BOOKING_DURATION_HOURS = 3;
 const BOOKING_CAPACITY = 3;
 const MAX_BOOKING_DAYS_AHEAD = 90;
+const MIN_BOOKING_NOTICE_DAYS = 7;
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -50,7 +51,7 @@ function configuration(): array
 
     if (!is_string($calendarId) || trim($calendarId) === '' ||
         !is_string($serviceAccountJson) || trim($serviceAccountJson) === '') {
-        throw new HttpException(503, 'Online bookings are not configured yet. Please use the Google booking page.');
+        throw new HttpException(503, 'Online bookings are not available yet. Please send us an enquiry instead.');
     }
 
     $account = json_decode($serviceAccountJson, true);
@@ -166,6 +167,9 @@ function bookingInterval(string $date): array
     if ($bookingDate < $today || $bookingDate > $today->modify('+' . MAX_BOOKING_DAYS_AHEAD . ' days')) {
         throw new HttpException(400, 'Bookings are available up to 90 days ahead.');
     }
+    if ($bookingDate < $today->modify('+' . MIN_BOOKING_NOTICE_DAYS . ' days')) {
+        throw new HttpException(400, 'VIP tables need to be booked at least one week ahead.');
+    }
     if (!in_array((int) $bookingDate->format('N'), [5, 6], true)) {
         throw new HttpException(400, 'VIP table bookings are available on Fridays and Saturdays.');
     }
@@ -261,6 +265,7 @@ function availabilityGrid(array $config, string $from, string $to): array
         $toDate->modify('+1 day'),
     );
     $now = new DateTimeImmutable('now', $timezone);
+    $earliestDate = $today->modify('+' . MIN_BOOKING_NOTICE_DAYS . ' days');
     $slots = [];
 
     for ($date = $fromDate; $date <= $toDate; $date = $date->modify('+1 day')) {
@@ -280,7 +285,7 @@ function availabilityGrid(array $config, string $from, string $to): array
                 $overlapCount++;
             }
         }
-        $remaining = $start <= $now ? 0 : max(0, BOOKING_CAPACITY - $overlapCount);
+        $remaining = ($start <= $now || $date < $earliestDate) ? 0 : max(0, BOOKING_CAPACITY - $overlapCount);
         $slots[$date->format('Y-m-d')] = [
             'available' => $remaining > 0,
             'slotsRemaining' => $remaining,

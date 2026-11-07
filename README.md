@@ -5,7 +5,7 @@ Site-wide email addresses and venue details are maintained in [`src/siteConfig.j
 
 ## VIP table bookings
 
-The contact page includes an in-app booking grid showing booked and available Friday/Saturday slots for the 9pm–midnight (Brisbane time) VIP booking. It displays remaining table capacity without showing customer details, supports up to three overlapping bookings, and writes confirmed bookings to Google Calendar. VIP packages start at $350. Visitors can refresh availability before choosing. Private functions and call-back requests remain email enquiries. If the API is unavailable, the form offers the Google booking page as a fallback.
+The contact page includes an in-app booking grid showing booked and available Friday/Saturday slots for the 9pm–midnight (Brisbane time) VIP booking. It displays remaining table capacity without showing customer details, supports up to three overlapping bookings, and writes confirmed bookings to Google Calendar. VIP packages start at $350. Visitors can refresh availability before choosing. Private functions and call-back requests remain email enquiries. If the API is unavailable, the form points visitors to the enquiry form instead.
 
 The API is `public/api/bookings.php`. It requires PHP 8.1+ with cURL and OpenSSL on the existing cPanel host. The Vite build copies it to `/api/bookings.php` for the current FTP deployment.
 
@@ -22,7 +22,7 @@ The time slot and capacity are enforced in `public/api/bookings.php` and display
 
 The booking API reads `kommunity-calendar-config.php` from the project root; `public/api/config.example.php` is only an example and is not loaded by the endpoint. For local testing, put the private config and service-account JSON in the project root, and make sure `serviceAccountFile` points to that JSON file. Both files are ignored by Git.
 
-The online booking form is disabled by default in each browser. To enable it for local testing, open the browser developer console on the website, run `localStorage.setItem("kommunityVipBookingApiEnabled", "true")`, then reload. To disable it again, run `localStorage.removeItem("kommunityVipBookingApiEnabled")` and reload. This browser-side flag only controls whether the form calls the API; it is not server-side access control.
+The online booking form is switched on and off with `bookings.onlineEnabled` in `src/siteConfig.js`. When it is off, the VIP section sends visitors to the enquiry form on the contact page. Bookings require at least one week's notice (`bookings.minNoticeDays` in `src/siteConfig.js` and `MIN_BOOKING_NOTICE_DAYS` in `public/api/bookings.php`; keep them aligned).
 
 With PHP 8.1+ and the cURL and OpenSSL extensions enabled, open two terminals in the project root:
 

@@ -27,7 +27,7 @@ export default function ContactPage() {
       <header className="mb-10 max-w-3xl">
         <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-pink-300">Get in touch</p>
         <h1 className="text-4xl font-black sm:text-6xl">Let's make <span className="text-pink-500">plans.</span></h1>
-        <p className="mt-5 text-lg leading-7 text-white/65">Book a VIP table online, or email us about a private function or call-back.</p>
+        <p className="mt-5 text-lg leading-7 text-white/65">Enquire about a VIP table, a private function or a call-back.</p>
       </header>
       <div className="grid gap-12 border-t border-white/10 py-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)] lg:gap-16">
         <VipBookingForm />
@@ -47,8 +47,8 @@ export default function ContactPage() {
         </aside>
       </div>
       <div className="grid gap-8 border-t border-white/10 pt-8 sm:grid-cols-2">
-        <section>
-          <h2 className="font-bold">Private functions and call-backs</h2>
+        <section className="scroll-mt-24" id="enquiry">
+          <h2 className="font-bold">VIP tables, private functions and call-backs</h2>
           <form className="mt-4 space-y-4" onSubmit={sendEnquiry}>
             <label className="block text-sm font-semibold" htmlFor="enquiry-name">
               Your name
@@ -61,6 +61,7 @@ export default function ContactPage() {
             <label className="block text-sm font-semibold" htmlFor="enquiry-type">
               Enquiry type
               <select className="mt-2 block w-full border border-white/20 bg-[#171317] px-4 py-3 text-white focus:border-pink-400 focus:outline-none" id="enquiry-type" name="enquiryType">
+                <option>VIP table</option>
                 <option>Private function</option>
                 <option>Call back</option>
                 <option>General enquiry</option>
