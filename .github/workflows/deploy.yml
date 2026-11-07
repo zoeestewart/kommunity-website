@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main ]
 
+concurrency:
+  group: cpanel-deploy
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -24,13 +28,22 @@ jobs:
       - name: Build app
         run: npm run build
 
-      - name: Deploy via FTP to cPanel
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: 21
-          protocol: ftp
-          local-dir: ./dist/
-          server-dir: ./
+      - name: Set up SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "103.254.137.129 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC/2Cyzck0b6ImNyWGoenYUlmKuP1d2Y/XlWztrNGYNM" >> ~/.ssh/known_hosts
+          printf 'Host cpanel\n  HostName 103.254.137.129\n  User kommunit\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n' > ~/.ssh/config
+
+      # The kommunity site lives directly in public_html, next to the vet site
+      # folders. This only adds/overwrites files from dist/, so nothing else in
+      # public_html is touched, then removes old build files from assets/.
+      - name: Deploy to cPanel
+        env:
+          TARGET: public_html
+        run: |
+          tar -C dist -czf - . | ssh cpanel "tar -C $TARGET --no-overwrite-dir -xzf -"
+          ls dist/assets | ssh cpanel "k=\$(mktemp) && cat > \$k && cd $TARGET/assets && ls -A | grep -vxF -f \$k | xargs -r rm -f --; rm -f \$k"
