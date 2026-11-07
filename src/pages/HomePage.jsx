@@ -60,14 +60,26 @@ export default function HomePage() {
             <Link className="bg-pink-500 px-6 py-3 font-bold text-black transition hover:bg-pink-300" to="/events">
               Explore what's on
             </Link>
-            <Link className="border border-white/40 px-6 py-3 font-bold transition hover:border-pink-400 hover:bg-white/10" to="/vip">
+            <Link className="border border-white/40 px-6 py-3 font-bold transition hover:border-pink-400 hover:bg-white/10" to="/vip#book">
               Book VIP
             </Link>
           </div>
         </div>
       </section>
-      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-16 sm:px-6 md:grid-cols-2 lg:px-8">
-        <Link className="border-l-2 border-pink-500 bg-white/[0.04] p-7 transition hover:bg-white/[0.08]" to="/vip">
+      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
+        <a
+          className="border-l-2 border-pink-500 bg-white/[0.04] p-7 transition hover:bg-white/[0.08]"
+          href={siteConfig.guestlist.url}
+          rel="noreferrer"
+          target="_blank"
+        >
+          <p className="text-sm font-bold uppercase tracking-[0.16em] text-pink-300">Free entry</p>
+          <h2 className="mt-3 text-2xl font-bold">Get on the guestlist</h2>
+          <p className="mt-3 text-white/65">
+            {siteConfig.guestlist.night}s, free until {siteConfig.guestlist.freeUntil}. Guestlist closes at {siteConfig.guestlist.closes}.
+          </p>
+        </a>
+        <Link className="border-l-2 border-pink-500 bg-white/[0.04] p-7 transition hover:bg-white/[0.08]" to="/vip#book">
           <p className="text-sm font-bold uppercase tracking-[0.16em] text-pink-300">Private bookings</p>
           <h2 className="mt-3 text-2xl font-bold">Bring your people together</h2>
           <p className="mt-3 text-white/65">Make your next celebration a night in the Valley.</p>

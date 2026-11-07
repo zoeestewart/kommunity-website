@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FaInstagram } from "react-icons/fa";
 import { FiMenu, FiX } from "react-icons/fi";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import siteConfig from "./siteConfig";
 
 const navigation = [
@@ -46,6 +46,21 @@ export default function App() {
     };
   }, [isMenuOpen]);
 
+  // The router doesn't scroll by itself: links with a #section (like Bookings)
+  // scroll to that section, and other page changes start at the top.
+  const { pathname, hash, key } = useLocation();
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const target = hash && document.getElementById(decodeURIComponent(hash.slice(1)));
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo({ top: 0 });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname, hash, key]);
+
   return (
     <div className="min-h-screen bg-[#100d10] text-white">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#100d10]/95 backdrop-blur">
@@ -61,7 +76,7 @@ export default function App() {
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            <Link className="bg-[#ff2c8a] px-4 py-2 text-sm font-bold text-black transition hover:bg-pink-300" to="/contact">Bookings</Link>
+            <Link className="bg-[#ff2c8a] px-4 py-2 text-sm font-bold text-black transition hover:bg-pink-300" to="/vip#book">Bookings</Link>
             <button
               aria-label="Open navigation menu"
               aria-expanded={isMenuOpen}
@@ -119,7 +134,7 @@ export default function App() {
             <Link
               className="mt-auto bg-[#ff2c8a] px-5 py-3 text-center font-bold text-black transition hover:bg-pink-300"
               onClick={() => setIsMenuOpen(false)}
-              to="/contact"
+              to="/vip#book"
             >
               Bookings
             </Link>
@@ -132,13 +147,19 @@ export default function App() {
           <div>
             <p className="text-lg font-bold">Kommunity</p>
             <p className="mt-3 max-w-sm text-sm leading-6 text-white/65">Brisbane nights, made for your Kommunity.</p>
+            <p className="mt-5 max-w-sm text-sm leading-6 text-white/65">
+              <span className="font-semibold text-white">Join the team.</span> Street promo team wanted. Email{" "}
+              <a className="text-pink-300 transition hover:text-pink-200" href={`mailto:${siteConfig.emails.marketing}?subject=${encodeURIComponent("Street promo team")}`}>
+                {siteConfig.emails.marketing}
+              </a>
+            </p>
           </div>
-          <div className="text-sm leading-7 text-white/65 md:text-right">
+          <div className="flex flex-col items-start text-sm leading-7 text-white/65 md:items-end md:text-right">
             <p className="font-semibold text-white">{siteConfig.venue.streetAddress}</p>
             <p>{siteConfig.venue.locality}</p>
-            <a className="transition hover:text-white" href={`mailto:${siteConfig.emails.marketing}`}>{siteConfig.emails.marketing}</a>
+            <a className="mt-3 transition hover:text-white" href={`mailto:${siteConfig.emails.marketing}`}>{siteConfig.emails.marketing}</a>
             <a
-              className="mt-2 inline-flex items-center gap-2 transition hover:text-pink-300"
+              className="inline-flex items-center gap-2 transition hover:text-pink-300"
               href={siteConfig.instagram.profileUrl}
               rel="noreferrer"
               target="_blank"

@@ -15,6 +15,17 @@ const siteConfig = {
     openingDays: "Friday and Saturday",
     openingHours: "9pm till late",
   },
+  enquiry: {
+    // Emails the enquiry form to emails.bookings (set in public/api/enquiry.php).
+    apiUrl: "/api/enquiry.php",
+  },
+  guestlist: {
+    // Free entry form linked from the Instagram bio.
+    url: "https://tally.so/r/XxBpre",
+    night: "Friday",
+    closes: "9pm",
+    freeUntil: "11pm",
+  },
   bookings: {
     // Set to false to hide the online VIP booking form and send visitors to the enquiry form instead.
     onlineEnabled: true,

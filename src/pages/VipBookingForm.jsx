@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import siteConfig from "../siteConfig";
 
 class BookingApiError extends Error {
@@ -65,7 +66,6 @@ export default function VipBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
   const [bookingError, setBookingError] = useState("");
-  const [showContactFallback, setShowContactFallback] = useState(false);
   const [availabilityRefresh, setAvailabilityRefresh] = useState(0);
   const confirmationRef = useRef(null);
   const earliestDate = addDays(today, siteConfig.bookings.minNoticeDays);
@@ -75,13 +75,11 @@ export default function VipBookingForm() {
   useEffect(() => {
     if (!isBookingApiEnabled) {
       setIsChecking(false);
-      setShowContactFallback(true);
       return undefined;
     }
 
     const controller = new AbortController();
     setIsChecking(true);
-    setShowContactFallback(false);
 
     fetch(`${siteConfig.bookings.apiUrl}?from=${encodeURIComponent(earliestDate)}&to=${encodeURIComponent(addDays(today, 90))}`, {
       signal: controller.signal,
@@ -92,14 +90,12 @@ export default function VipBookingForm() {
           throw new BookingApiError("The booking service returned an invalid availability grid.");
         }
         setSlots(result.slots);
-        setShowContactFallback(false);
         setAvailabilityMessage("Choose a Friday or Saturday. Availability is shown in Brisbane time.");
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
           setSlots({});
           setAvailabilityMessage(error.message || "We couldn't check availability. Please try again.");
-          setShowContactFallback(true);
         }
       })
       .finally(() => {
@@ -125,7 +121,6 @@ export default function VipBookingForm() {
 
     if (!isBookingApiEnabled) {
       setBookingError("Online bookings are currently unavailable. Please send us an enquiry instead.");
-      setShowContactFallback(true);
       return;
     }
 
@@ -168,9 +163,6 @@ export default function VipBookingForm() {
       setDate("");
     } catch (error) {
       setBookingError(error.message || "We couldn't complete the booking. Please try again.");
-      if (error.status === undefined || error.status >= 500) {
-        setShowContactFallback(true);
-      }
       if (error.status === 409) {
         setSlots((currentSlots) => ({
           ...currentSlots,
@@ -195,12 +187,12 @@ export default function VipBookingForm() {
           <p className="text-sm leading-6 text-white/65">
             To book a VIP table, send us an enquiry with your preferred date and number of guests and we’ll get back to you.
           </p>
-          <a
+          <Link
             className="mt-4 inline-flex bg-pink-500 px-6 py-3 font-bold text-black transition hover:bg-pink-300"
-            href="#enquiry"
+            to="/contact#enquiry"
           >
             Enquire about a VIP table
-          </a>
+          </Link>
         </div>
       ) : <form className="mt-6 space-y-5" onSubmit={submitBooking}>
         <fieldset>
@@ -299,14 +291,6 @@ export default function VipBookingForm() {
           </div>
         )}
         {bookingError && <p aria-live="assertive" className="text-sm text-red-300">{bookingError}</p>}
-        {showContactFallback && (
-          <a
-            className="inline-flex border border-white/30 px-5 py-3 font-semibold transition hover:border-pink-400 hover:text-pink-300"
-            href="#enquiry"
-          >
-            Send us an enquiry instead
-          </a>
-        )}
         <button
           className="block bg-pink-500 px-6 py-3 font-bold text-black transition hover:bg-pink-300 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSubmitting || isChecking || !availability?.available || !date}

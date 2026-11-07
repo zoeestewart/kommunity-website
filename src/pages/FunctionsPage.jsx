@@ -10,7 +10,7 @@ export default function FunctionsPage() {
       </header>
       <div className="flex flex-col items-start justify-between gap-6 border-l-2 border-pink-500 bg-white/[0.05] p-7 sm:flex-row sm:items-center sm:p-9">
         <h2 className="max-w-2xl text-2xl font-bold sm:text-3xl">Tell us what you're planning and we'll help bring it to life.</h2>
-        <Link className="shrink-0 bg-pink-500 px-6 py-3 font-bold text-black transition hover:bg-pink-300" to="/contact">Enquire now</Link>
+        <Link className="shrink-0 bg-pink-500 px-6 py-3 font-bold text-black transition hover:bg-pink-300" to="/contact#enquiry">Enquire now</Link>
       </div>
     </section>
   );
